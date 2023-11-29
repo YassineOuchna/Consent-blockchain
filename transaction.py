@@ -22,6 +22,8 @@ from ecdsa import VerifyingKey, BadSignatureError, ecdsa
 from rich.console import Console
 from rich.table import Table
 from utils import get_time, str_to_time
+import database_manager
+from database_manager import contracts_database
 
 
 class IncompleteTransaction(Exception):
