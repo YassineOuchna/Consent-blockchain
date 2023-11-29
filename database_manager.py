@@ -29,3 +29,9 @@ class contracts_database():
         }
         conn.commit()
         return data
+
+    def get_history(self, author):
+        r = cur.execute(
+            f"SELECT contract_id, author, date, signature, content FROM contracts WHERE author='{author}'").fetchall()
+        history = [self.get_contract(contract[0]) for contract in r]
+        return history
