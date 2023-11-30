@@ -2,9 +2,9 @@
 <html>
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-12">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Tables Example</title>
+    <title>Contract history</title>
     <style>
         table {
             border-collapse: collapse;
@@ -16,7 +16,7 @@
         td {
             border: 1px solid #dddddd;
             text-align: left;
-            padding: 8px;
+            padding: 5px;
         }
 
         th {
@@ -26,7 +26,7 @@
 </head>
 
 <body>
-    <table>
+    <table align="center">
         <caption>Contracts history</caption>
         <tr>
             <th>Id</th>
@@ -34,17 +34,25 @@
             <th>Date</th>
             <th>Signature</th>
             <th>Content</th>
+            <th>PDF file</th>
         </tr>
         {% for contract in history %}
         <tr>
-            <td>{{ contract['contract_id'][:4]+'...'+ contract['contract_id'][-4:]}}</td>
-            <td>{{ contract['author'][:4]+ '...'+contract['author'][-4:] }}</td>
+            <td>{{contract['contract_id'][:12]+'...'+ contract['contract_id'][-12:]}}</td>
+            <td>{{ contract['author'][:12]+ '...'+contract['author'][-12:] }}</td>
             <td>{{ contract['date'] }}</td>
-            <td>{{ contract['signature'][:4] + '...'+contract['signature'][-4:]}}</td>
+            <td>{{ contract['signature'][:12] + '...'+contract['signature'][-12:]}}</td>
             <td>{{ contract['content'] }}</td>
+            <td><button onclick="downloadPDF('{{contract['contract_id']}}')">Download
+                    PDF</button></td>
         </tr>
         {% endfor %}
     </table>
+    <script>
+        function downloadPDF(contract_id) {
+            window.location.href = `/generate_pdf/${contract_id}`;
+        }
+    </script>
 </body>
 
 </html>

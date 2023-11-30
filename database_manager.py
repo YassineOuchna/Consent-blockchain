@@ -1,6 +1,6 @@
 import sqlite3 as sq
 
-conn = sq.connect('database.db')
+conn = sq.connect('database.db', check_same_thread=False)
 cur = conn.cursor()
 
 
