@@ -1,10 +1,18 @@
-import blockchain, block, transaction
-from flask import Flask, jsonify, request
+import blockchain, block
+from flask import Flask, jsonify, request, render_template, send_file, redirect, url_for
 from uuid import uuid4
+from ecdsa import SigningKey, NIST384p
+from database_manager import contracts_database
+from PIL import Image, ImageDraw, ImageFont
+import io
+import datetime
+import base64
+from transaction import Transaction
+
 
 
 app = Flask(__name__)
-
+cd = contracts_database()
 
 # Generate a globally unique address for this node
 node_identifiere = str(uuid4()).replace('-', '')
@@ -12,25 +20,9 @@ node_identifiere = str(uuid4()).replace('-', '')
 # Instantiate the Blockchain
 blockchaine = blockchain.Blockchain()
 
-
-@app.route('/mine', methods=['GET'])
-def mine():
-    return "We'll mine a new Block"
-  
-@app.route('/transactions/new', methods=['POST'])
-def new_transaction():
-    values = request.get_json()
-
-    # Check that the required fields are in the POST'ed data
-    required = ['sender', 'recipient', 'amount']
-    if not all(k in values for k in required):
-        return 'Missing values', 400
-
-    # Create a new Transaction
-    index = blockchain.add_transaction(values['sender'], values['recipient'], values['amount'])
-
-    response = {'message': f'Transaction will be added to Block {index}'}
-    return jsonify(response), 201
+@app.route('/')
+def home():
+    return render_template('home.html')
 
 @app.route('/chain', methods=['GET'])
 def full_chain():
@@ -40,6 +32,65 @@ def full_chain():
     }
     return jsonify(response), 200
 
+@app.route('/Create_contract')
+def create_contract():
+    return render_template('create_contract.html')
+
+
+@app.route('/create_contract', methods=['POST'])
+def create():
+    if request.method == 'POST':
+        # Get form inputs
+        client_name = request.form['client_name']
+        service_description = request.form['service_description']
+        payment_amount = request.form['payment_amount']
+        location = request.form['location']
+        # Here, you can create the contract using the inputs
+        # For simplicity, let's just format the contract as a string
+        contract = f"Client: {client_name} Description of Service : {service_description} Payment: ${payment_amount} Location: {location}"
+        # You can then save this contract to a file or database, or perform any other actions needed
+        # And now we'll add the transaction in our database
+        sk = SigningKey.generate(curve=NIST384p)
+        tr = Transaction(contract)
+        cd.add_contract(tr)
+        current_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Create an image with PIL
+        img = Image.new('RGB', (800, 600), color=(255, 255, 255))
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.load_default()
+
+        # Set margins and starting positions for content
+        margin = 50
+        start_position = 100
+
+        # Write content to the image in a contract-like format
+        contract_content = [
+            f"CLIENT: {client_name}",
+            f"SERVICE DESCRIPTION: {service_description}",
+            f"PAYMENT AMOUNT: {payment_amount}",
+            f"DATE: {current_date}",
+            f"LOCATION: {location}"
+        ]
+
+        for content in contract_content:
+            draw.text((margin, start_position), content, fill=(0, 0, 0), font=font)
+            start_position += 50  # Adjust spacing between lines
+
+        # Save the image to a byte buffer as PNG format
+        img_byte_array = io.BytesIO()
+        img.save(img_byte_array, format='PNG')
+        img_byte_array.seek(0)
+        img_base64 = base64.b64encode(img_byte_array.read()).decode('utf-8')
+        return redirect(url_for('contract_display', contract_image=img_base64))
+    return "Something went wrong."
+
+#display the contract image
+@app.route('/contract_display')
+def contract_display():
+    contract_image = request.args.get('contract_image')
+    return render_template('contract_display.html', contract_image=contract_image)
+
+
 if __name__ == '__main__':
-    app.run(debug = True)
+    app.run(host='0.0.0.0', port=5000)
     
