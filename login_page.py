@@ -33,10 +33,8 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     if user and check_password_hash(user.hashed_password, password):
-        # Successful login - you can set session or cookie here
         return redirect(url_for('success'))
     else:
-        # Incorrect username or password, handle this as per your requirement
         return "Invalid username or password"
     
 
@@ -51,20 +49,17 @@ def register():
         username = request.form['username']
         password = request.form['password']
 
-        # Check if username already exists in the database
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             return "Username already exists. Please choose another username."
         
-        # Hash the password before saving it
         hashed_password = generate_password_hash(password)
 
-        # Create a new user and add it to the database
         new_user = User(username=username, hashed_password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('index'))  # Redirect to the login page or another page after successful registration
+        return redirect(url_for('index')) 
 
     return render_template('register.html')
 
