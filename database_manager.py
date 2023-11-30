@@ -35,3 +35,26 @@ class contracts_database():
             f"SELECT contract_id, author, date, signature, content FROM contracts WHERE author='{author}'").fetchall()
         history = [self.get_contract(contract[0]) for contract in r]
         return history
+
+
+class users():
+    def __init__(self):
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS users(id, hashed_password)")
+        conn.commit()
+
+    def add_user(self, id, hashed_p):
+        cur.execute(
+            f"INSERT INTO contracts VALUES ('{id}', '{hashed_p}')")
+        conn.commit()
+
+    def get_user(self, id):
+        try:
+            r = cur.execute(
+                f"SELECT id, hashed_password FROM users WHERE id='{id}'").fetchall()
+            conn.commit()
+            if r is None:
+                raise Exception("User not found")
+        except Exception as e:
+            print("An error occurred:", e)
+        return r
