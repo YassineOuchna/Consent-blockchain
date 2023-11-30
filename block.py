@@ -35,6 +35,13 @@ class Block(object):
             self.transactions = []
             self.proof = 0
             self.previous_hash = "0"*64
+            
+    def serialize(self):
+        return {"index": self.index,
+                "timestamp": self.timestamp,
+                "transactions": self.transactions,
+                "proof": self.proof,
+                "previous_hash": self.previous_hash}
 
     @property
     def block_data(self):
