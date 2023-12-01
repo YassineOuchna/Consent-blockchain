@@ -31,6 +31,75 @@ node_identifiere = str(uuid4()).replace('-', '')
 # Instantiate the Blockchain
 blockchaine = blockchain.Blockchain()
 
+
+
+
+name = ""
+
+@app.route('/')
+def index():
+    return render_template('welcome.html')
+
+@app.route('/login')
+def connect():
+    return render_template('login.html')
+
+
+
+@app.route('/login/user', methods=['POST'])
+def login():
+    username = request.form['uname']
+    password = request.form['psw']
+
+    user = User.query.filter_by(username=username).first()
+    if user and check_password_hash(user.hashed_password, password):
+        global name
+        name = username
+        return render_template('home.html' , username=username)
+    else:
+        return "Invalid username or password"
+    
+@app.route('/logout')
+def logout():
+    global name
+    name = ""
+
+    return render_template('logout.html')
+
+
+
+
+
+@app.route('/success')
+def success():
+    return "Login successful!"
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            return "Username already exists. Please choose another username."
+        
+        hashed_password = generate_password_hash(password)
+
+        new_user = User(username=username, hashed_password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        return redirect(url_for('index')) 
+
+    return render_template('register.html')
+
+
+
+
+
+
 @app.route('/home')
 def home():
     return render_template('home.html')
@@ -93,46 +162,6 @@ def contract_display():
     contract_image = request.args.get('contract_image')
     return render_template('contract_display.html', contract_image=contract_image)
 
-@app.route('/')
-def index():
-    return render_template('login.html')
-
-@app.route('/login/user', methods=['POST'])
-def login():
-    username = request.form['uname']
-    password = request.form['psw']
-
-    user = User.query.filter_by(username=username).first()
-    if user and check_password_hash(user.hashed_password, password):
-        return render_template('home.html' , username=username)
-    else:
-        return "Invalid username or password"
-    
-
-@app.route('/success')
-def success():
-    return "Login successful!"
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            return "Username already exists. Please choose another username."
-        
-        hashed_password = generate_password_hash(password)
-
-        new_user = User(username=username, hashed_password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-
-        return redirect(url_for('index')) 
-
-    return render_template('register.html')
 
 
 
