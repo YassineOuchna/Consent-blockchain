@@ -93,6 +93,10 @@ def contract_display():
     contract_image = request.args.get('contract_image')
     return render_template('contract_display.html', contract_image=contract_image)
 
+@app.route('/Contact')
+def contact():
+    return render_template('contact.html')
+
 @app.route('/')
 def index():
     return render_template('login.html')
