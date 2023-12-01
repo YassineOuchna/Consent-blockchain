@@ -163,6 +163,9 @@ def contract_display():
     return render_template('contract_display.html', contract_image=contract_image)
 
 
+@app.route('/Contact')
+def contact():
+    return render_template('contact.html')
 
 
 if __name__ == '__main__':
