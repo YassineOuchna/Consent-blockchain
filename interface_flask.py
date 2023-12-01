@@ -8,29 +8,32 @@ import io
 import datetime
 import base64
 from transaction import Transaction
+import os
+from werkzeug.security import check_password_hash, generate_password_hash
+from flask_sqlalchemy import SQLAlchemy
+
 
 
 
 app = Flask(__name__)
 cd = contracts_database()
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users_data.db'
+db = SQLAlchemy(app)
 
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    hashed_password = db.Column(db.String(100), nullable=False)
 # Generate a globally unique address for this node
 node_identifiere = str(uuid4()).replace('-', '')
 
 # Instantiate the Blockchain
 blockchaine = blockchain.Blockchain()
 
-@app.route('/')
+@app.route('/home')
 def home():
     return render_template('home.html')
-
-@app.route('/chain', methods=['GET'])
-def full_chain():
-    response = {
-        'chain': [block.serialize() for block in blockchaine.chain],
-        'length': len(blockchaine.chain),
-    }
-    return jsonify(response), 200
 
 @app.route('/Create_contract')
 def create_contract():
@@ -90,7 +93,49 @@ def contract_display():
     contract_image = request.args.get('contract_image')
     return render_template('contract_display.html', contract_image=contract_image)
 
+@app.route('/')
+def index():
+    return render_template('login.html')
+
+@app.route('/login/user', methods=['POST'])
+def login():
+    username = request.form['uname']
+    password = request.form['psw']
+
+    user = User.query.filter_by(username=username).first()
+    if user and check_password_hash(user.hashed_password, password):
+        return render_template('home.html' , username=username)
+    else:
+        return "Invalid username or password"
+    
+
+@app.route('/success')
+def success():
+    return "Login successful!"
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            return "Username already exists. Please choose another username."
+        
+        hashed_password = generate_password_hash(password)
+
+        new_user = User(username=username, hashed_password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        return redirect(url_for('index')) 
+
+    return render_template('register.html')
+
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
     
