@@ -1,8 +1,8 @@
 import blockchain, block
 from flask import Flask, jsonify, request, render_template, send_file, redirect, url_for
 from uuid import uuid4
-from ecdsa import SigningKey, NIST384p
-from database_manager import contracts_database
+from ecdsa import SigningKey, NIST192p
+from database_manager import contracts_database, blockchain_database
 from PIL import Image, ImageDraw, ImageFont
 import io
 import datetime
@@ -11,13 +11,13 @@ from transaction import Transaction
 import os
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from reportlab.pdfgen import canvas
 
-
-
+author=''
 
 app = Flask(__name__)
 cd = contracts_database()
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users_data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user_data.db'
 db = SQLAlchemy(app)
 
 
@@ -25,11 +25,17 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     hashed_password = db.Column(db.String(100), nullable=False)
+    signing_key = db.Column(db.String(100), unique=True, nullable=False)
+
+
 # Generate a globally unique address for this node
 node_identifiere = str(uuid4()).replace('-', '')
 
 # Instantiate the Blockchain
 blockchaine = blockchain.Blockchain()
+
+blockch = blockchain.Blockchain()
+blockch_database = blockchain_database()
 
 
 
@@ -52,6 +58,8 @@ def login():
     password = request.form['psw']
 
     user = User.query.filter_by(username=username).first()
+    global author 
+    author = user.signing_key
     if user and check_password_hash(user.hashed_password, password):
         global name
         name = username
@@ -80,18 +88,20 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
+        sk = SigningKey.generate()
+        sk = sk.to_string()
+        sk = sk.hex()  # Convert binary to hexadecimal text
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             return "Username already exists. Please choose another username."
         
         hashed_password = generate_password_hash(password)
 
-        new_user = User(username=username, hashed_password=hashed_password)
+        new_user = User(username=username, hashed_password=hashed_password, signing_key=sk)
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('index')) 
+        return redirect(url_for('connect')) 
 
     return render_template('register.html')
 
@@ -113,17 +123,18 @@ def create_contract():
 def create():
     if request.method == 'POST':
         # Get form inputs
-        client_name = request.form['client_name']
         service_description = request.form['service_description']
-        payment_amount = request.form['payment_amount']
-        location = request.form['location']
+
+
         # Here, you can create the contract using the inputs
         # For simplicity, let's just format the contract as a string
-        contract = f"Client: {client_name} Description of Service : {service_description} Payment: ${payment_amount} Location: {location}"
+        contract = f"Description of Service : {service_description}"
         # You can then save this contract to a file or database, or perform any other actions needed
         # And now we'll add the transaction in our database
-        sk = SigningKey.generate(curve=NIST384p)
+        sk = bytes.fromhex(author)
+        sk = SigningKey.from_string(sk, curve=NIST192p)
         tr = Transaction(contract)
+        tr.author = author
         cd.add_contract(tr)
         current_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         # Create an image with PIL
@@ -137,11 +148,8 @@ def create():
 
         # Write content to the image in a contract-like format
         contract_content = [
-            f"CLIENT: {client_name}",
             f"SERVICE DESCRIPTION: {service_description}",
-            f"PAYMENT AMOUNT: {payment_amount}",
-            f"DATE: {current_date}",
-            f"LOCATION: {location}"
+            f"DATE: {current_date}"
         ]
 
         for content in contract_content:
@@ -166,6 +174,58 @@ def contract_display():
 @app.route('/Contact')
 def contact():
     return render_template('contact.html')
+
+
+
+@app.route('/blockchain', methods=['GET'])
+def full_chain():
+    blocks = []
+    full_blockchain = blockch_database.get_blockchain()
+    for block in full_blockchain:
+        # Convert rich table to a list of dictionaries
+        block_ = {}
+        block_['title'] = 'Block' + block[0]['index_block']
+        data = []
+        for transaction in block:
+            del transaction['index_block']
+            data.append(transaction)
+        block_['data'] = data
+        blocks.append(block_)
+
+    return render_template('blockchain.html', blocks=blocks)
+
+
+history = cd.get_history(author)
+
+@app.route('/history')
+def get_user_history(): 
+    
+    return render_template('history.html', history=history)
+
+
+@app.route('/generate_pdf/<string:contract_id>')
+def generate_pdf(contract_id):
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer)
+    contract = cd.get_contract(contract_id)
+    pdf.drawString(50, 820, f"Date :  {contract['date']}")
+    pdf.drawString(50, 800, f"Contract Id : {contract['contract_id']}")
+    pdf.drawString(50, 780, f"Author :  {contract['author']}")
+    pdf.drawString(50, 700, f"{contract['content']}")
+    pdf.drawString(50, 100, "Signature : ")
+    pdf.drawString(50, 75, f"{contract['signature'][:64]}")
+    pdf.drawString(50, 50, f"{contract['signature'][64:128]}")
+    pdf.drawString(50, 25, f"{contract['signature'][128:]}")
+    pdf.save()
+
+    # Move the buffer's pointer to the beginning
+    buffer.seek(0)
+
+    # Return the generated PDF file to the user for download
+    return send_file(buffer, as_attachment=True, download_name=f"contract_{contract['contract_id']}.pdf")
+
+
+
 
 
 if __name__ == '__main__':

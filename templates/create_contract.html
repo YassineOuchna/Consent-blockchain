@@ -15,21 +15,10 @@
         <h1 style="text-align: center;">Create a Contract</h1>
         <form action="{{ url_for('create') }}" method="post">
             <div style="margin-bottom: 15px;">
-                <label for="client_name" style="display: block;">Client Name :</label>
-                <input type="text" id="client_name" name="client_name" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc;" required>
-            </div>
-            <div style="margin-bottom: 15px;">
                 <label for="service_description" style="display: block;">Service Description :</label>
                 <textarea id="service_description" name="service_description" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc;" rows="5" required></textarea>
             </div>
-            <div style="margin-bottom: 15px;">
-                <label for="payment_amount" style="display: block;">Payment Amount :</label>
-                <input type="text" id="payment_amount" name="payment_amount" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc;" required>
-            </div>
-            <div style="margin-bottom: 15px;">
-                <label for="payment_amount" style="display: block;">Location :</label>
-                <input type="text" id="location" name="location" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc;" required>
-            </div>
+
             <button type="submit" style="width: 100%; padding: 10px; border-radius: 5px; background-color: #007bff; color: white; border: none;">Create Contract</button>
         </form>
     </div>

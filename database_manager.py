@@ -1,5 +1,4 @@
 import sqlite3 as sq
-from transaction import Transaction
 
 conn = sq.connect('database.db', check_same_thread=False)
 cur = conn.cursor()
@@ -11,7 +10,7 @@ class contracts_database():
             "CREATE TABLE IF NOT EXISTS contracts(contract_id TEXT NOT NULL, author, date date, signature, content)")
         conn.commit()
 
-    def add_contract(self, contract : Transaction):  # takes in a transaction object
+    def add_contract(self, contract):  # takes in a transaction object
         data = contract.data
         contract_id = contract.hash()
         cur.execute(
@@ -59,3 +58,41 @@ class users():
         except Exception as e:
             print("An error occurred:", e)
         return r
+
+
+class blockchain_database():
+    def __init__(self):
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS blockchain(index_block, proof, date date, transaction_id TEXT NOT NULL, previous_hash)")
+        conn.commit()
+
+    def add_block(self, block):  # takes in a transaction object
+        data = block.block_data
+        for contract in data['transactions']:
+            cur.execute(
+                f"INSERT INTO blockchain VALUES ('{data['index']}', '{data['proof']}', '{data['timestamp']}','{contract.hash()}', '{data['previous_hash']}')")
+            conn.commit()
+
+    def get_block(self, index_block):
+        b = cur.execute(
+            f"SELECT index_block, proof, date, transaction_id, previous_hash FROM blockchain WHERE index_block='{index_block}'").fetchall()
+        data = []
+        for r in b:
+            data.append({
+                "index_block": r[0],
+                "proof": r[1],
+                "date": r[2],
+                "transaction_id": r[3],
+                "previous_hash": r[4]
+            })
+        conn.commit()
+        return data  # returns list of contracts in a single block of index_block index
+
+    def get_blockchain(self):
+        r = cur.execute(
+            f"SELECT index_block, proof, date, transaction_id, previous_hash FROM blockchain").fetchall()
+        num_blocks = cur.execute(
+            f'SELECT COUNT(DISTINCT index_block) as num_orders FROM blockchain').fetchone()[0]
+        history = [self.get_block(index_block)
+                   for index_block in range(1, num_blocks+1)]
+        return history
