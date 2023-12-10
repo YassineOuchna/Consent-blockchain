@@ -1,5 +1,5 @@
 from flask import Flask, render_template, send_file
-from database_manager import contracts_database
+from database_manager import contracts_database, blockchain_database
 from reportlab.pdfgen import canvas
 import io
 import json
