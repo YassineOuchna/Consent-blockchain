@@ -1,5 +1,5 @@
 from flask import Flask, render_template, send_file
-from database_manager import contracts_database
+from database_manager import contracts_database, blockchain_database
 from reportlab.pdfgen import canvas
 import io
 import json
@@ -25,10 +25,10 @@ def generate_pdf(contract_id):
     pdf.drawString(50, 800, f"Contract Id : {contract['contract_id']}")
     pdf.drawString(50, 780, f"Author :  {contract['author']}")
     pdf.drawString(50, 700, f"{contract['content']}")
-    pdf.drawString(50, 450, "Signature : ")
-    pdf.drawString(50, 400, f"{contract['signature'][:64]}")
-    pdf.drawString(50, 375, f"{contract['signature'][64:128]}")
-    pdf.drawString(50, 350, f"{contract['signature'][128:]}")
+    pdf.drawString(50, 100, "Signature : ")
+    pdf.drawString(50, 75, f"{contract['signature'][:64]}")
+    pdf.drawString(50, 50, f"{contract['signature'][64:128]}")
+    pdf.drawString(50, 25, f"{contract['signature'][128:]}")
     pdf.save()
 
     # Move the buffer's pointer to the beginning

@@ -58,3 +58,40 @@ class users():
         except Exception as e:
             print("An error occurred:", e)
         return r
+
+
+class blockchain_database():
+    def __init__(self):
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS blockchain(index, proof, date date, transaction_id NOT NULL, previous_hash)")
+        conn.commit()
+
+    def add_block(self, block):  # takes in a transaction object
+        data = block.data
+        for contract in data['transactions']:
+            cur.execute(
+                f"INSERT INTO blockchain VALUES ('{data['index']}', '{data['proof']}', '{data['timestamp']}','{contract.hash()}', '{data['previous_hash']}')")
+            conn.commit()
+
+    def get_block(self, index):
+        b = cur.execute(
+            f"SELECT index, proof, date, transaction_id, previous_hash FROM blockchain WHERE index={index}").fetchall()
+        data = []
+        for r in b:
+            data.append({
+                "index": r[0],
+                "prrof": r[1],
+                "date": r[2],
+                "transaction_id": r[3],
+                "previous_hash": r[4]
+            })
+        conn.commit()
+        return r   # returns list of contracts in a single block of index index
+
+    def get_blockchain(self):
+        r = cur.execute(
+            f"SELECT index, proof, date, transaction_id, previous_hash FROM blockchain").fetchall()
+        num_blocks = cur.execute(
+            f'SELECT COUNT(*) as num_orders FROM orders GROUP BY index')
+        history = [self.get_block(index) for index in len(num_blocks)]
+        return history
