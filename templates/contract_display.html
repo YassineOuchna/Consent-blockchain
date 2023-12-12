@@ -1,0 +1,10 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+    {% include 'includes/_messages.html' %}
+    <div class="container">
+        <h1>Generated Contract</h1>
+        <!-- Display the contract image -->
+        <img src="data:image/png;base64, {{ contract_image }}" alt="Contract Image">
+    </div>
+{% endblock %}

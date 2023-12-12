@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-12">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract history</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 50%;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 5px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <table align="center">
+        <h1 align="center">Contracts history</h1>
+        <tr>
+            <th>Id</th>
+            <th>Author</th>
+            <th>Date</th>
+            <th>Signature</th>
+            <th>Content</th>
+            <th>PDF summary</th>
+        </tr>
+        {% for contract in history %}
+        <tr>
+            <td>{{contract['contract_id'][:12]+'...'+ contract['contract_id'][-12:]}}</td>
+            <td>{{ contract['author'][:12]+ '...'+contract['author'][-12:] }}</td>
+            <td>{{ contract['date'] }}</td>
+            <td>{{ contract['signature'][:12] + '...'+contract['signature'][-12:]}}</td>
+            <td>{{ contract['content'] }}</td>
+            <td><button onclick="downloadPDF('{{contract['contract_id']}}')">Download
+                    PDF</button></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <script>
+        function downloadPDF(contract_id) {
+            window.location.href = `/generate_pdf/${contract_id}`;
+        }
+    </script>
+</body>
+
+</html>

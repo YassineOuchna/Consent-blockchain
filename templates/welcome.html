@@ -1,6 +1,10 @@
-{% extends 'layout.html' %}
+{% extends 'layout1.html' %}
 
 {% block body %}
+
+    
+    
+    {% include 'includes/_messages.html' %}
     
     <div class="jumbotron container" style="margin-top: 20px ;">
         <h1 class="bd-title" id="content">Blockchain App</h1>
@@ -8,7 +12,7 @@
         <hr style="margin: 30px;">
         <h2 class="bd-title" id="content">Welcome :</h2>
             <p class="bd-lead">
-                {{ username}}
+                This website is a blockchain based service where two adult can store and verify a legally binding contract proving consent
             </p>
         <hr style="margin: 30px;">
         <h2 class="bd-title" id="content">Github link  :</h2>
