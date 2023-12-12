@@ -16,11 +16,9 @@ from reportlab.pdfgen import canvas
 import hashlib
 
 
-
 blockch = blockchain.Blockchain()
 blockch_database = blockchain_database()
 blk = Block()
-print(blk)
 blockch_database.add_block(blk)
 
 cont_database = contracts_database()
@@ -31,15 +29,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///user_data.db'
 db = SQLAlchemy(app)
 
 
-
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True, nullable=False, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True,
+                   nullable=False, autoincrement=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     hashed_password = db.Column(db.String(100), nullable=False)
     signing_key = db.Column(db.String(100), unique=True, nullable=False)
-    
-
-
 
 
 # Generate a globally unique address for this node
@@ -49,11 +44,11 @@ node_identifiere = str(uuid4()).replace('-', '')
 blockchaine = blockchain.Blockchain()
 
 
-
-
 name = ""
 
 # Route to clear the table
+
+
 @app.route('/clear_table')
 def clear_table():
     try:
@@ -62,54 +57,45 @@ def clear_table():
 
         # Commit changes
         db.session.commit()
-        
+
         return 'Table cleared successfully'
     except Exception as e:
         # Rollback changes if an exception occurs
         db.session.rollback()
         return f'Error: {str(e)}'
 
+
 @app.route('/')
 def index():
     return render_template('welcome.html')
+
 
 @app.route('/login')
 def connect():
     return render_template('login.html')
 
 
-
 @app.route('/login/user', methods=['POST'])
 def login():
     username = request.form['uname']
     password = request.form['psw']
-    
-    print(username)
-    print(password)
 
     user = User.query.filter_by(username=username).first()
-    
-    print(user)
-    
-    print(user.hashed_password)
-    print(generate_password_hash(password))
 
     if user and check_password_hash(user.hashed_password, password):
         global name
         name = username
-        return render_template('home.html' , username=username)
+        return render_template('home.html', username=username)
     else:
         return "Invalid username or password"
-    
+
+
 @app.route('/logout')
 def logout():
     global name
     name = ""
 
     return render_template('logout.html')
-
-
-
 
 
 @app.route('/success')
@@ -128,25 +114,23 @@ def register():
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             return "Username already exists. Please choose another username."
-        
+
         hashed_password = generate_password_hash(password)
 
-        new_user = User(username=username, hashed_password=hashed_password, signing_key=sk)
+        new_user = User(username=username,
+                        hashed_password=hashed_password, signing_key=sk)
         db.session.add(new_user)
         db.session.commit()
 
-        return redirect(url_for('connect')) 
+        return redirect(url_for('connect'))
 
     return render_template('register.html')
-
-
-
-
 
 
 @app.route('/home')
 def home():
     return render_template('home.html')
+
 
 @app.route('/Create_contract')
 def create_contract():
@@ -173,7 +157,7 @@ def create():
         tr.sign(sk)
         cd.add_contract(tr)
         blockch.add_transaction(tr)
-        b= blockch.new_block()
+        b = blockch.new_block()
         b.mine()
         blockch.extend_chain(b)
         blockch_database.add_block(b)
@@ -193,7 +177,8 @@ def create():
         ]
 
         for content in contract_content:
-            draw.text((margin, start_position), content, fill=(0, 0, 0), font=font)
+            draw.text((margin, start_position), content,
+                      fill=(0, 0, 0), font=font)
             start_position += 50  # Adjust spacing between lines
 
         # Save the image to a byte buffer as PNG format
@@ -204,7 +189,9 @@ def create():
         return redirect(url_for('contract_display', contract_image=img_base64))
     return "Something went wrong."
 
-#display the contract image
+# display the contract image
+
+
 @app.route('/contract_display')
 def contract_display():
     contract_image = request.args.get('contract_image')
@@ -214,6 +201,7 @@ def contract_display():
 @app.route('/Contact')
 def contact():
     return render_template('contact.html')
+
 
 @app.route('/blockchain', methods=['GET'])
 def full_chain():
@@ -232,6 +220,7 @@ def full_chain():
 
     return render_template('blockchain.html', blocks=blocks)
 
+
 @app.route('/history')
 def get_user_history():
     user = User.query.filter_by(username=name).first()
@@ -242,6 +231,7 @@ def get_user_history():
     author = hashlib.sha256(vk.encode()).hexdigest()
     history = cont_database.get_history(author)
     return render_template('history.html', history=history)
+
 
 @app.route('/generate_pdf/<string:contract_id>')
 def generate_pdf(contract_id):
@@ -265,9 +255,6 @@ def generate_pdf(contract_id):
     return send_file(buffer, as_attachment=True, download_name=f"contract_{contract['contract_id']}.pdf")
 
 
-
-
 if __name__ == '__main__':
-    
+
     app.run(host='0.0.0.0', port=5000, debug=True)
-    
